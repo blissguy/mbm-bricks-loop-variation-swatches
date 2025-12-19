@@ -1,0 +1,87 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get plugin version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Plugin version: $VERSION"
+
+      - name: Create plugin zip
+        run: |
+          PLUGIN_SLUG="mbm-bricks-loop-variation-swatches"
+          mkdir -p build/$PLUGIN_SLUG
+          
+          # Copy plugin files (exclude dev/build files)
+          rsync -av --exclude-from=- . build/$PLUGIN_SLUG/ <<EOF
+          .git
+          .github
+          .gitignore
+          .DS_Store
+          .idea
+          .vscode
+          node_modules
+          vendor
+          *.log
+          *.zip
+          build
+          EOF
+          
+          # Create zip
+          cd build
+          zip -r ../${PLUGIN_SLUG}-${{ steps.version.outputs.version }}.zip $PLUGIN_SLUG
+          cd ..
+          
+          echo "Created ${PLUGIN_SLUG}-${{ steps.version.outputs.version }}.zip"
+          ls -la *.zip
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get commits since last tag
+          PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "Changes since $PREVIOUS_TAG:"
+            CHANGELOG=$(git log --pretty=format:"- %s" $PREVIOUS_TAG..HEAD)
+          else
+            echo "First release"
+            CHANGELOG="Initial release"
+          fi
+          
+          # Write to file for multiline support
+          echo "$CHANGELOG" > changelog.txt
+          echo "changelog_file=changelog.txt" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: v${{ steps.version.outputs.version }}
+          body_path: changelog.txt
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          files: |
+            mbm-bricks-loop-variation-swatches-${{ steps.version.outputs.version }}.zip
+          generate_release_notes: true
+
