@@ -42,107 +42,70 @@ function mbm_bvs_get_global_attribute_options() {
 
 /* Cache variation attributes per request */
 function mbm_bvs_get_variation_attributes_cached( $product ) {
-	if ( ! $product || ! is_object( $product ) || ! method_exists( $product, 'get_id' ) ) {
-		return array();
-	}
-
-	$product_id = (int) $product->get_id();
+	$product_id = $product->get_id();
 	$cache_key  = 'variation_attributes_' . $product_id;
 
 	$cached = wp_cache_get( $cache_key, 'mbm_bvs' );
-
 	if ( false !== $cached ) {
-		return is_array( $cached ) ? $cached : array();
-	}
-
-	if ( ! method_exists( $product, 'get_variation_attributes' ) ) {
-		return array();
+		return $cached;
 	}
 
 	$attrs = $product->get_variation_attributes();
-
 	wp_cache_set( $cache_key, $attrs, 'mbm_bvs', 300 );
 
-	return is_array( $attrs ) ? $attrs : array();
+	return $attrs;
 }
 
-/* CONFIRMED: term image attachment ID stored in bricks_swatch_image_value */
 function mbm_bvs_get_term_image_url_strict( $term_id ) {
 	$raw = get_term_meta( (int) $term_id, 'bricks_swatch_image_value', true );
-
-	$raw = is_string( $raw ) ? trim( $raw ) : (string) $raw;
+	$raw = trim( (string) $raw );
 
 	if ( $raw === '' || ! ctype_digit( $raw ) ) {
 		return '';
 	}
 
-	$url = wp_get_attachment_image_url( (int) $raw, 'thumbnail' );
-
-	return is_string( $url ) ? $url : '';
+	return wp_get_attachment_image_url( (int) $raw, 'thumbnail' ) ?: '';
 }
 
-/* Build attr_value -> variation image URL map (only used when bricks_swatch_use_variation_image = 1) */
+/* Build attr_value -> variation image URL map */
 function mbm_bvs_get_variation_image_map_cached( $product ) {
-	if ( ! $product || ! is_object( $product ) || ! method_exists( $product, 'get_id' ) ) {
-		return array();
-	}
-
-	$product_id = (int) $product->get_id();
+	$product_id = $product->get_id();
 	$cache_key  = 'variation_image_map_' . $product_id;
 
 	$cached = wp_cache_get( $cache_key, 'mbm_bvs' );
-
 	if ( false !== $cached ) {
-		return is_array( $cached ) ? $cached : array();
+		return $cached;
 	}
 
-	$map = array();
-
-	if ( ! method_exists( $product, 'get_children' ) ) {
-		return $map;
-	}
-
+	$map       = array();
 	$child_ids = $product->get_children();
 
 	foreach ( $child_ids as $child_id ) {
 		$variation = wc_get_product( $child_id );
-
-		if ( ! $variation || ! is_object( $variation ) || ! method_exists( $variation, 'get_image_id' ) ) {
+		if ( ! $variation ) {
 			continue;
 		}
 
 		$image_id = (int) $variation->get_image_id();
-
 		if ( $image_id <= 0 ) {
 			continue;
 		}
 
 		$image_url = wp_get_attachment_image_url( $image_id, 'thumbnail' );
-
-		if ( ! is_string( $image_url ) || $image_url === '' ) {
+		if ( ! $image_url ) {
 			continue;
 		}
 
-		$attrs = method_exists( $variation, 'get_attributes' ) ? $variation->get_attributes() : array();
-
-		if ( ! is_array( $attrs ) ) {
-			continue;
-		}
-
-		foreach ( $attrs as $attr_key => $attr_value ) {
+		foreach ( $variation->get_attributes() as $attr_key => $attr_value ) {
 			$attr_key = sanitize_key( mbm_bvs_normalize_attribute_key( $attr_key ) );
-			$val      = is_string( $attr_value ) ? trim( $attr_value ) : '';
+			$val      = trim( (string) $attr_value );
 
-			if ( $attr_key === '' || $val === '' ) {
+			if ( $attr_key === '' || $val === '' || isset( $map[ $attr_key ][ $val ] ) ) {
 				continue;
 			}
 
 			if ( empty( $map[ $attr_key ] ) ) {
 				$map[ $attr_key ] = array();
-			}
-
-			if ( isset( $map[ $attr_key ][ $val ] ) ) {
-				continue;
 			}
 
 			$map[ $attr_key ][ $val ] = $image_url;
@@ -161,38 +124,38 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 	public $css_selector = '.mbm-variation-swatches';
 
 	public function get_label() {
-		return esc_html__( 'Loop Variation Swatches', 'mbm-bricks-variation-swatches' );
+		return esc_html__( 'Loop Variation Swatches', 'mbm-bricks-loop-variation-swatches' );
 	}
 
 	public function set_control_groups() {
 		$this->control_groups['attributes'] = array(
-			'title' => esc_html__( 'Attributes', 'mbm-bricks-variation-swatches' ),
+			'title' => esc_html__( 'Attributes', 'mbm-bricks-loop-variation-swatches' ),
 			'tab'   => 'content',
 		);
 
 		$this->control_groups['layout'] = array(
-			'title' => esc_html__( 'Layout', 'mbm-bricks-variation-swatches' ),
+			'title' => esc_html__( 'Layout', 'mbm-bricks-loop-variation-swatches' ),
 			'tab'   => 'content',
 		);
 
 		/* Attribute style controls (per type) */
 		$this->control_groups['attribute_style_label'] = array(
-			'title' => esc_html__( 'Attribute Style: Label', 'mbm-bricks-variation-swatches' ),
+			'title' => esc_html__( 'Attribute Style: Label', 'mbm-bricks-loop-variation-swatches' ),
 			'tab'   => 'content',
 		);
 
 		$this->control_groups['attribute_style_color'] = array(
-			'title' => esc_html__( 'Attribute Style: Color', 'mbm-bricks-variation-swatches' ),
+			'title' => esc_html__( 'Attribute Style: Color', 'mbm-bricks-loop-variation-swatches' ),
 			'tab'   => 'content',
 		);
 
 		$this->control_groups['attribute_style_image'] = array(
-			'title' => esc_html__( 'Attribute Style: Image', 'mbm-bricks-variation-swatches' ),
+			'title' => esc_html__( 'Attribute Style: Image', 'mbm-bricks-loop-variation-swatches' ),
 			'tab'   => 'content',
 		);
 
 		$this->control_groups['attribute_style_group_label'] = array(
-			'title' => esc_html__( 'Attribute Group Label', 'mbm-bricks-variation-swatches' ),
+			'title' => esc_html__( 'Attribute Group Label', 'mbm-bricks-loop-variation-swatches' ),
 			'tab'   => 'content',
 		);
 	}
@@ -204,51 +167,51 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['attributes'] = array(
 			'tab'           => 'content',
 			'group'         => 'attributes',
-			'label'         => esc_html__( 'Attributes to display', 'mbm-bricks-variation-swatches' ),
+			'label'         => esc_html__( 'Attributes to display', 'mbm-bricks-loop-variation-swatches' ),
 			'type'          => 'repeater',
 			'titleProperty' => 'attribute',
 			'fields'        => array(
 				'attribute' => array(
-					'label'       => esc_html__( 'Attribute', 'mbm-bricks-variation-swatches' ),
+					'label'       => esc_html__( 'Attribute', 'mbm-bricks-loop-variation-swatches' ),
 					'type'        => 'select',
 					'options'     => array_merge(
 						array(
-							'custom' => esc_html__( 'Custom attribute (type name)', 'mbm-bricks-variation-swatches' ),
+							'custom' => esc_html__( 'Custom attribute (type name)', 'mbm-bricks-loop-variation-swatches' ),
 						),
 						$attribute_options
 					),
-					'placeholder' => esc_html__( 'Select attribute', 'mbm-bricks-variation-swatches' ),
+					'placeholder' => esc_html__( 'Select attribute', 'mbm-bricks-loop-variation-swatches' ),
 					'searchable'  => true,
 					'clearable'   => false,
 				),
 
 				'custom_attribute' => array(
-					'label'       => esc_html__( 'Custom attribute name', 'mbm-bricks-variation-swatches' ),
+					'label'       => esc_html__( 'Custom attribute name', 'mbm-bricks-loop-variation-swatches' ),
 					'type'        => 'text',
-					'placeholder' => esc_html__( 'e.g. size', 'mbm-bricks-variation-swatches' ),
+					'placeholder' => esc_html__( 'e.g. size', 'mbm-bricks-loop-variation-swatches' ),
 					'required'    => array( 'attribute', '=', 'custom' ),
 				),
 
 				'show_label' => array(
-					'label'   => esc_html__( 'Show attribute label', 'mbm-bricks-variation-swatches' ),
+					'label'   => esc_html__( 'Show attribute label', 'mbm-bricks-loop-variation-swatches' ),
 					'type'    => 'checkbox',
 					'default' => true,
 				),
 
 				'limit' => array(
-					'label'       => esc_html__( 'Max values (0 = all)', 'mbm-bricks-variation-swatches' ),
+					'label'       => esc_html__( 'Max values (0 = all)', 'mbm-bricks-loop-variation-swatches' ),
 					'type'        => 'text',
 					'placeholder' => '0',
 					'default'     => '0',
 				),
 
 				'min_values' => array(
-					'label'       => esc_html__( 'Min values to render', 'mbm-bricks-variation-swatches' ),
+					'label'       => esc_html__( 'Min values to render', 'mbm-bricks-loop-variation-swatches' ),
 					'type'        => 'number',
 					'placeholder' => '0',
 					'default'     => 0,
 					'min'         => 0,
-					'description' => esc_html__( 'Only render when more than this many values exist (0 = always render)', 'mbm-bricks-variation-swatches' ),
+					'description' => esc_html__( 'Only render when more than this many values exist (0 = always render)', 'mbm-bricks-loop-variation-swatches' ),
 				),
 			),
 		);
@@ -257,7 +220,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['listDirection'] = array(
 			'tab'   => 'content',
 			'group' => 'layout',
-			'label' => esc_html__( 'List direction', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'List direction', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'direction',
 			'css'   => array(
 				array(
@@ -270,7 +233,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['listJustify'] = array(
 			'tab'   => 'content',
 			'group' => 'layout',
-			'label' => esc_html__( 'Justify content', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'Justify content', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'justify-content',
 			'css'   => array(
 				array(
@@ -283,7 +246,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['listAlign'] = array(
 			'tab'   => 'content',
 			'group' => 'layout',
-			'label' => esc_html__( 'Align items', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'Align items', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'align-items',
 			'css'   => array(
 				array(
@@ -296,7 +259,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['listGap'] = array(
 			'tab'         => 'content',
 			'group'       => 'layout',
-			'label'       => esc_html__( 'List gap', 'mbm-bricks-variation-swatches' ),
+			'label'       => esc_html__( 'List gap', 'mbm-bricks-loop-variation-swatches' ),
 			'type'        => 'text',
 			'placeholder' => '6px',
 			'css'         => array(
@@ -307,16 +270,10 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 			),
 		);
 
-		/*
-		 * Attribute group label styling (applies to all types).
-		 *
-		 * Typography control docs:
-		 * https://academy.bricksbuilder.io/article/typography-control/
-		 */
 		$this->controls['groupLabelTypography'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_group_label',
-			'label' => esc_html__( 'Typography', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'Typography', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'typography',
 			'css'   => array(
 				array(
@@ -329,7 +286,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['groupLabelBackground'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_group_label',
-			'label' => esc_html__( 'Background', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'Background', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'background',
 			'css'   => array(
 				array(
@@ -339,17 +296,6 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 			),
 		);
 
-		/*
-		 * Helper: type-scoped selectors.
-		 * We rely on a deterministic class added in render():
-		 * .mbm-variation-swatches__group[data-swatch-type="{label|color|image}"]
-		 */
-		/*
-		 * Reduce CSS specificity for Bricks-generated, instance-scoped styles.
-		 * Bricks will scope rules with .brxe-<id> for each element instance.
-		 * Wrapping the target selector in :where(...) keeps specificity low, making it easier
-		 * to override with custom CSS.
-		 */
 		$sel_label_group = ':where(.mbm-variation-swatches__group[data-swatch-type="label"])';
 		$sel_color_group = ':where(.mbm-variation-swatches__group[data-swatch-type="color"])';
 		$sel_image_group = ':where(.mbm-variation-swatches__group[data-swatch-type="image"])';
@@ -360,7 +306,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['labelGroupDirection'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_label',
-			'label' => esc_html__( 'Group direction', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'Group direction', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'direction',
 			'css'   => array(
 				array(
@@ -373,7 +319,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['labelGroupJustify'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_label',
-			'label' => esc_html__( 'Group justify content', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'Group justify content', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'justify-content',
 			'css'   => array(
 				array(
@@ -386,7 +332,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['labelGroupAlign'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_label',
-			'label' => esc_html__( 'Group align items', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'Group align items', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'align-items',
 			'css'   => array(
 				array(
@@ -399,7 +345,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['labelGroupGap'] = array(
 			'tab'         => 'style',
 			'group'       => 'attribute_style_label',
-			'label'       => esc_html__( 'Group gap', 'mbm-bricks-variation-swatches' ),
+			'label'       => esc_html__( 'Group gap', 'mbm-bricks-loop-variation-swatches' ),
 			'type'        => 'text',
 			'placeholder' => '6px',
 			'css'         => array(
@@ -413,12 +359,12 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['labelGroupWrap'] = array(
 			'tab'     => 'style',
 			'group'   => 'attribute_style_label',
-			'label'   => esc_html__( 'Group wrap', 'mbm-bricks-variation-swatches' ),
+			'label'   => esc_html__( 'Group wrap', 'mbm-bricks-loop-variation-swatches' ),
 			'type'    => 'select',
 			'options' => array(
-				'nowrap'       => esc_html__( 'No wrap', 'mbm-bricks-variation-swatches' ),
-				'wrap'         => esc_html__( 'Wrap', 'mbm-bricks-variation-swatches' ),
-				'wrap-reverse' => esc_html__( 'Wrap reverse', 'mbm-bricks-variation-swatches' ),
+				'nowrap'       => esc_html__( 'No wrap', 'mbm-bricks-loop-variation-swatches' ),
+				'wrap'         => esc_html__( 'Wrap', 'mbm-bricks-loop-variation-swatches' ),
+				'wrap-reverse' => esc_html__( 'Wrap reverse', 'mbm-bricks-loop-variation-swatches' ),
 			),
 			'default' => 'nowrap',
 			'css'     => array(
@@ -433,7 +379,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['labelListDirection'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_label',
-			'label' => esc_html__( 'List direction', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'List direction', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'direction',
 			'css'   => array(
 				array(
@@ -446,7 +392,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['labelListJustify'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_label',
-			'label' => esc_html__( 'List justify content', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'List justify content', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'justify-content',
 			'css'   => array(
 				array(
@@ -459,7 +405,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['labelListAlign'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_label',
-			'label' => esc_html__( 'List align items', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'List align items', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'align-items',
 			'css'   => array(
 				array(
@@ -472,7 +418,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['labelListGap'] = array(
 			'tab'         => 'style',
 			'group'       => 'attribute_style_label',
-			'label'       => esc_html__( 'List gap', 'mbm-bricks-variation-swatches' ),
+			'label'       => esc_html__( 'List gap', 'mbm-bricks-loop-variation-swatches' ),
 			'type'        => 'text',
 			'placeholder' => '6px',
 			'css'         => array(
@@ -486,12 +432,12 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['labelListWrap'] = array(
 			'tab'     => 'style',
 			'group'   => 'attribute_style_label',
-			'label'   => esc_html__( 'List wrap', 'mbm-bricks-variation-swatches' ),
+			'label'   => esc_html__( 'List wrap', 'mbm-bricks-loop-variation-swatches' ),
 			'type'    => 'select',
 			'options' => array(
-				'nowrap'       => esc_html__( 'No wrap', 'mbm-bricks-variation-swatches' ),
-				'wrap'         => esc_html__( 'Wrap', 'mbm-bricks-variation-swatches' ),
-				'wrap-reverse' => esc_html__( 'Wrap reverse', 'mbm-bricks-variation-swatches' ),
+				'nowrap'       => esc_html__( 'No wrap', 'mbm-bricks-loop-variation-swatches' ),
+				'wrap'         => esc_html__( 'Wrap', 'mbm-bricks-loop-variation-swatches' ),
+				'wrap-reverse' => esc_html__( 'Wrap reverse', 'mbm-bricks-loop-variation-swatches' ),
 			),
 			'default' => 'wrap',
 			'css'     => array(
@@ -506,7 +452,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['labelSwatchSize'] = array(
 			'tab'         => 'style',
 			'group'       => 'attribute_style_label',
-			'label'       => esc_html__( 'Swatch size', 'mbm-bricks-variation-swatches' ),
+			'label'       => esc_html__( 'Swatch size', 'mbm-bricks-loop-variation-swatches' ),
 			'type'        => 'text',
 			'placeholder' => '14px',
 			'css'         => array(
@@ -520,7 +466,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['labelSwatchTypography'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_label',
-			'label' => esc_html__( 'Swatch typography', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'Swatch typography', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'typography',
 			'css'   => array(
 				array(
@@ -537,7 +483,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['labelSwatchBackground'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_label',
-			'label' => esc_html__( 'Swatch background', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'Swatch background', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'background',
 			'css'   => array(
 				array(
@@ -550,7 +496,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['labelSwatchBorder'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_label',
-			'label' => esc_html__( 'Swatch border', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'Swatch border', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'border',
 			'css'   => array(
 				array(
@@ -564,7 +510,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['colorGroupDirection'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_color',
-			'label' => esc_html__( 'Group direction', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'Group direction', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'direction',
 			'css'   => array(
 				array(
@@ -577,7 +523,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['colorGroupJustify'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_color',
-			'label' => esc_html__( 'Group justify content', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'Group justify content', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'justify-content',
 			'css'   => array(
 				array(
@@ -590,7 +536,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['colorGroupAlign'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_color',
-			'label' => esc_html__( 'Group align items', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'Group align items', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'align-items',
 			'css'   => array(
 				array(
@@ -603,7 +549,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['colorGroupGap'] = array(
 			'tab'         => 'style',
 			'group'       => 'attribute_style_color',
-			'label'       => esc_html__( 'Group gap', 'mbm-bricks-variation-swatches' ),
+			'label'       => esc_html__( 'Group gap', 'mbm-bricks-loop-variation-swatches' ),
 			'type'        => 'text',
 			'placeholder' => '6px',
 			'css'         => array(
@@ -617,12 +563,12 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['colorGroupWrap'] = array(
 			'tab'     => 'style',
 			'group'   => 'attribute_style_color',
-			'label'   => esc_html__( 'Group wrap', 'mbm-bricks-variation-swatches' ),
+			'label'   => esc_html__( 'Group wrap', 'mbm-bricks-loop-variation-swatches' ),
 			'type'    => 'select',
 			'options' => array(
-				'nowrap'       => esc_html__( 'No wrap', 'mbm-bricks-variation-swatches' ),
-				'wrap'         => esc_html__( 'Wrap', 'mbm-bricks-variation-swatches' ),
-				'wrap-reverse' => esc_html__( 'Wrap reverse', 'mbm-bricks-variation-swatches' ),
+				'nowrap'       => esc_html__( 'No wrap', 'mbm-bricks-loop-variation-swatches' ),
+				'wrap'         => esc_html__( 'Wrap', 'mbm-bricks-loop-variation-swatches' ),
+				'wrap-reverse' => esc_html__( 'Wrap reverse', 'mbm-bricks-loop-variation-swatches' ),
 			),
 			'default' => 'nowrap',
 			'css'     => array(
@@ -637,7 +583,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['colorListDirection'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_color',
-			'label' => esc_html__( 'List direction', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'List direction', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'direction',
 			'css'   => array(
 				array(
@@ -650,7 +596,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['colorListJustify'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_color',
-			'label' => esc_html__( 'List justify content', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'List justify content', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'justify-content',
 			'css'   => array(
 				array(
@@ -663,7 +609,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['colorListAlign'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_color',
-			'label' => esc_html__( 'List align items', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'List align items', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'align-items',
 			'css'   => array(
 				array(
@@ -676,7 +622,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['colorListGap'] = array(
 			'tab'         => 'style',
 			'group'       => 'attribute_style_color',
-			'label'       => esc_html__( 'List gap', 'mbm-bricks-variation-swatches' ),
+			'label'       => esc_html__( 'List gap', 'mbm-bricks-loop-variation-swatches' ),
 			'type'        => 'text',
 			'placeholder' => '6px',
 			'css'         => array(
@@ -690,12 +636,12 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['colorListWrap'] = array(
 			'tab'     => 'style',
 			'group'   => 'attribute_style_color',
-			'label'   => esc_html__( 'List wrap', 'mbm-bricks-variation-swatches' ),
+			'label'   => esc_html__( 'List wrap', 'mbm-bricks-loop-variation-swatches' ),
 			'type'    => 'select',
 			'options' => array(
-				'nowrap'       => esc_html__( 'No wrap', 'mbm-bricks-variation-swatches' ),
-				'wrap'         => esc_html__( 'Wrap', 'mbm-bricks-variation-swatches' ),
-				'wrap-reverse' => esc_html__( 'Wrap reverse', 'mbm-bricks-variation-swatches' ),
+				'nowrap'       => esc_html__( 'No wrap', 'mbm-bricks-loop-variation-swatches' ),
+				'wrap'         => esc_html__( 'Wrap', 'mbm-bricks-loop-variation-swatches' ),
+				'wrap-reverse' => esc_html__( 'Wrap reverse', 'mbm-bricks-loop-variation-swatches' ),
 			),
 			'default' => 'wrap',
 			'css'     => array(
@@ -710,7 +656,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['colorSwatchSize'] = array(
 			'tab'         => 'style',
 			'group'       => 'attribute_style_color',
-			'label'       => esc_html__( 'Swatch size', 'mbm-bricks-variation-swatches' ),
+			'label'       => esc_html__( 'Swatch size', 'mbm-bricks-loop-variation-swatches' ),
 			'type'        => 'text',
 			'placeholder' => '14px',
 			'css'         => array(
@@ -724,7 +670,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['colorSwatchBorder'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_color',
-			'label' => esc_html__( 'Swatch border', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'Swatch border', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'border',
 			'css'   => array(
 				array(
@@ -738,7 +684,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['imageGroupDirection'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_image',
-			'label' => esc_html__( 'Group direction', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'Group direction', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'direction',
 			'css'   => array(
 				array(
@@ -751,7 +697,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['imageGroupJustify'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_image',
-			'label' => esc_html__( 'Group justify content', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'Group justify content', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'justify-content',
 			'css'   => array(
 				array(
@@ -764,7 +710,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['imageGroupAlign'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_image',
-			'label' => esc_html__( 'Group align items', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'Group align items', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'align-items',
 			'css'   => array(
 				array(
@@ -777,7 +723,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['imageGroupGap'] = array(
 			'tab'         => 'style',
 			'group'       => 'attribute_style_image',
-			'label'       => esc_html__( 'Group gap', 'mbm-bricks-variation-swatches' ),
+			'label'       => esc_html__( 'Group gap', 'mbm-bricks-loop-variation-swatches' ),
 			'type'        => 'text',
 			'placeholder' => '6px',
 			'css'         => array(
@@ -791,12 +737,12 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['imageGroupWrap'] = array(
 			'tab'     => 'style',
 			'group'   => 'attribute_style_image',
-			'label'   => esc_html__( 'Group wrap', 'mbm-bricks-variation-swatches' ),
+			'label'   => esc_html__( 'Group wrap', 'mbm-bricks-loop-variation-swatches' ),
 			'type'    => 'select',
 			'options' => array(
-				'nowrap'       => esc_html__( 'No wrap', 'mbm-bricks-variation-swatches' ),
-				'wrap'         => esc_html__( 'Wrap', 'mbm-bricks-variation-swatches' ),
-				'wrap-reverse' => esc_html__( 'Wrap reverse', 'mbm-bricks-variation-swatches' ),
+				'nowrap'       => esc_html__( 'No wrap', 'mbm-bricks-loop-variation-swatches' ),
+				'wrap'         => esc_html__( 'Wrap', 'mbm-bricks-loop-variation-swatches' ),
+				'wrap-reverse' => esc_html__( 'Wrap reverse', 'mbm-bricks-loop-variation-swatches' ),
 			),
 			'default' => 'nowrap',
 			'css'     => array(
@@ -811,7 +757,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['imageListDirection'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_image',
-			'label' => esc_html__( 'List direction', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'List direction', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'direction',
 			'css'   => array(
 				array(
@@ -824,7 +770,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['imageListJustify'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_image',
-			'label' => esc_html__( 'List justify content', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'List justify content', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'justify-content',
 			'css'   => array(
 				array(
@@ -837,7 +783,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['imageListAlign'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_image',
-			'label' => esc_html__( 'List align items', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'List align items', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'align-items',
 			'css'   => array(
 				array(
@@ -850,7 +796,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['imageListGap'] = array(
 			'tab'         => 'style',
 			'group'       => 'attribute_style_image',
-			'label'       => esc_html__( 'List gap', 'mbm-bricks-variation-swatches' ),
+			'label'       => esc_html__( 'List gap', 'mbm-bricks-loop-variation-swatches' ),
 			'type'        => 'text',
 			'placeholder' => '6px',
 			'css'         => array(
@@ -864,12 +810,12 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['imageListWrap'] = array(
 			'tab'     => 'style',
 			'group'   => 'attribute_style_image',
-			'label'   => esc_html__( 'List wrap', 'mbm-bricks-variation-swatches' ),
+			'label'   => esc_html__( 'List wrap', 'mbm-bricks-loop-variation-swatches' ),
 			'type'    => 'select',
 			'options' => array(
-				'nowrap'       => esc_html__( 'No wrap', 'mbm-bricks-variation-swatches' ),
-				'wrap'         => esc_html__( 'Wrap', 'mbm-bricks-variation-swatches' ),
-				'wrap-reverse' => esc_html__( 'Wrap reverse', 'mbm-bricks-variation-swatches' ),
+				'nowrap'       => esc_html__( 'No wrap', 'mbm-bricks-loop-variation-swatches' ),
+				'wrap'         => esc_html__( 'Wrap', 'mbm-bricks-loop-variation-swatches' ),
+				'wrap-reverse' => esc_html__( 'Wrap reverse', 'mbm-bricks-loop-variation-swatches' ),
 			),
 			'default' => 'wrap',
 			'css'     => array(
@@ -884,7 +830,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['imageSwatchSize'] = array(
 			'tab'         => 'style',
 			'group'       => 'attribute_style_image',
-			'label'       => esc_html__( 'Swatch size', 'mbm-bricks-variation-swatches' ),
+			'label'       => esc_html__( 'Swatch size', 'mbm-bricks-loop-variation-swatches' ),
 			'type'        => 'text',
 			'placeholder' => '14px',
 			'css'         => array(
@@ -898,11 +844,11 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['imageObjectFit'] = array(
 			'tab'     => 'style',
 			'group'   => 'attribute_style_image',
-			'label'   => esc_html__( 'Image fit', 'mbm-bricks-variation-swatches' ),
+			'label'   => esc_html__( 'Image fit', 'mbm-bricks-loop-variation-swatches' ),
 			'type'    => 'select',
 			'options' => array(
-				'cover'   => esc_html__( 'Cover', 'mbm-bricks-variation-swatches' ),
-				'contain' => esc_html__( 'Contain', 'mbm-bricks-variation-swatches' ),
+				'cover'   => esc_html__( 'Cover', 'mbm-bricks-loop-variation-swatches' ),
+				'contain' => esc_html__( 'Contain', 'mbm-bricks-loop-variation-swatches' ),
 			),
 			'default' => 'cover',
 			'css'     => array(
@@ -916,7 +862,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['imageSwatchBorder'] = array(
 			'tab'   => 'style',
 			'group' => 'attribute_style_image',
-			'label' => esc_html__( 'Swatch border', 'mbm-bricks-variation-swatches' ),
+			'label' => esc_html__( 'Swatch border', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'border',
 			'css'   => array(
 				array(
@@ -940,14 +886,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$product_id = get_the_ID();
 		$product    = function_exists( 'wc_get_product' ) ? wc_get_product( $product_id ) : null;
 
-		/*
-		 * Bricks element IDs are often strings (not numeric). We must not cast to int,
-		 * otherwise scoped selectors like #brxe-{$this->id} break (become #brxe-0).
-		 */
-		$element_id = preg_replace( '/[^A-Za-z0-9_-]/', '', (string) $this->id );
-		$element_id = ( $element_id !== '' ) ? $element_id : (string) $this->id;
-
-		if ( ! $product || ! method_exists( $product, 'is_type' ) || ! $product->is_type( 'variable' ) ) {
+		if ( ! $product || ! $product->is_type( 'variable' ) ) {
 			return;
 		}
 
@@ -972,13 +911,10 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 
 		$this->set_attribute( '_root', 'class', array( 'mbm-variation-swatches' ) );
 
-		/*
-		 * Per-element scoped CSS rules (no inline style attributes).
-		 * We print a <style> tag AFTER the <ul> to keep <ul> content model valid.
-		 */
 		$scoped_css_rules = array();
 
-		echo "<ul {$this->render_attributes( '_root' )}>";
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- render_attributes() returns pre-escaped HTML attributes
+		echo '<ul ' . $this->render_attributes( '_root' ) . '>';
 
 		$variation_image_map = null;
 
@@ -1004,7 +940,6 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 
 			$total = count( $values );
 
-			/* Skip rendering if total values is not greater than min_values threshold */
 			if ( $min_values > 0 && $total <= $min_values ) {
 				continue;
 			}
@@ -1023,10 +958,6 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 				}
 			}
 
-			/*
-			 * Determine attribute group type (auto): Image > Color > Label.
-			 * This is used for type-specific styling controls without inline styles.
-			 */
 			$group_type = 'label';
 
 			if ( $is_tax ) {
@@ -1079,7 +1010,6 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 
 				$term_name = $value;
 
-				/* AUTO only: Image > Color > Label */
 				$img_url          = '';
 				$term_color       = '';
 				$use_var_image_on = false;
@@ -1088,15 +1018,10 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 					$term = get_term_by( 'slug', $value, $taxonomy );
 
 					if ( $term && ! is_wp_error( $term ) ) {
-						$term_name = $term->name;
-
-						/* CONFIRMED keys only */
+						$term_name        = $term->name;
 						$use_var_image_on = ( (int) get_term_meta( $term->term_id, 'bricks_swatch_use_variation_image', true ) === 1 );
 						$img_url          = mbm_bvs_get_term_image_url_strict( $term->term_id );
-
-						$raw_color  = get_term_meta( $term->term_id, 'bricks_swatch_color_value', true );
-						$raw_color  = is_string( $raw_color ) ? $raw_color : '';
-						$term_color = sanitize_hex_color( $raw_color );
+						$term_color       = sanitize_hex_color( (string) get_term_meta( $term->term_id, 'bricks_swatch_color_value', true ) );
 					}
 				}
 
@@ -1130,8 +1055,9 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 						}
 					}
 
-					$data_term_id = ( $term_id > 0 ) ? ' data-term-id="' . esc_attr( (string) $term_id ) . '"' : '';
-					echo '<span class="mbm-variation-swatches__swatch"' . $data_term_id . ' aria-label="' . esc_attr( $term_name ) . '" title="' . esc_attr( $term_name ) . '"></span>';
+					$data_term_attr = ( $term_id > 0 ) ? ' data-term-id="' . esc_attr( (string) $term_id ) . '"' : '';
+					// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $data_term_attr is escaped above
+					echo '<span class="mbm-variation-swatches__swatch"' . $data_term_attr . ' aria-label="' . esc_attr( $term_name ) . '" title="' . esc_attr( $term_name ) . '"></span>';
 
 				} else {
 					echo '<span class="mbm-variation-swatches__label-swatch" aria-label="' . esc_attr( $term_name ) . '" title="' . esc_attr( $term_name ) . '">' . esc_html( $term_name ) . '</span>';
@@ -1171,20 +1097,10 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 			}
 
 			if ( $css !== '' ) {
-				/*
-				 * Bricks builder can strip <style> tags from element HTML in the canvas/iframe,
-				 * which makes term colors disappear in the builder even though they work on the frontend.
-				 * Use wp_add_inline_style so the CSS is printed in <head> and applies in both contexts.
-				 */
 				static $mbm_bvs_inline_css_hashes = array();
 
-				$css_hash = md5( $css ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_md5
-
+				$css_hash = md5( $css );
 				if ( empty( $mbm_bvs_inline_css_hashes[ $css_hash ] ) ) {
-					/*
-					 * Ensure our stylesheet handle exists.
-					 * enqueue_scripts() should already have enqueued it, but we harden this path.
-					 */
 					if ( ! wp_style_is( 'mbm-bvs-frontend', 'enqueued' ) ) {
 						wp_enqueue_style(
 							'mbm-bvs-frontend',
@@ -1193,11 +1109,9 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 							MBM_BVS_VERSION
 						);
 					}
-
 					wp_add_inline_style( 'mbm-bvs-frontend', $css );
 					$mbm_bvs_inline_css_hashes[ $css_hash ] = true;
 				}
-
 			}
 		}
 

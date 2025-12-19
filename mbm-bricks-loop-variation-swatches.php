@@ -1,11 +1,14 @@
 <?php
 /**
  * Plugin Name: Bricks Query Loop Variation Swatches
- * Description: Adds a Bricks custom element to render WooCommerce variation swatches on product query loops (informational).
+ * Description: Adds a Bricks custom element to render WooCommerce variation swatches on product query loops.
  * Version: 1.0.0
  * Author: MixBus Marketing
  * Author URI: https://mixbusmarketing.com
- * Text Domain: mbm-bricks-variation-swatches
+ * Text Domain: mbm-bricks-loop-variation-swatches
+ * Requires Plugins: woocommerce
+ * Requires at least: 6.0
+ * Requires PHP: 7.4
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
@@ -22,7 +25,7 @@ add_action( 'plugins_loaded', 'mbm_bvs_bootstrap' );
 function mbm_bvs_bootstrap() {
 	/* Load translations */
 	load_plugin_textdomain(
-		'mbm-bricks-variation-swatches',
+		'mbm-bricks-loop-variation-swatches',
 		false,
 		dirname( plugin_basename( __FILE__ ) ) . '/languages'
 	);
@@ -39,7 +42,7 @@ function mbm_bvs_bootstrap() {
 }
 
 function mbm_bvs_add_builder_i18n( $i18n ) {
-	$i18n['mbm-woo'] = esc_html__( 'MBM Woo', 'mbm-bricks-variation-swatches' );
+	$i18n['mbm-woo'] = esc_html__( 'MBM Woo', 'mbm-bricks-loop-variation-swatches' );
 	return $i18n;
 }
 

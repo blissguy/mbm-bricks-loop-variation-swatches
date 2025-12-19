@@ -1,5 +1,15 @@
 # Bricks Query Loop Variation Swatches
 
+**Contributors:** mixbusmarketing  
+**Tags:** woocommerce, bricks, swatches, variations, product  
+**Requires at least:** 6.0  
+**Tested up to:** 6.9  
+**Stable tag:** 1.0.0  
+**Requires PHP:** 7.4  
+**Requires Plugins:** woocommerce  
+**License:** GPLv2 or later  
+**License URI:** https://www.gnu.org/licenses/gpl-2.0.html
+
 A WordPress plugin that adds a custom Bricks Builder element to display WooCommerce variation swatches on product query loops.
 
 ## Description
