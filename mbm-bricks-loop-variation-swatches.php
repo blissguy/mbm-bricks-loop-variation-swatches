@@ -1,8 +1,10 @@
 <?php
 /**
  * Plugin Name: Bricks Query Loop Variation Swatches
- * Description: Adds a Bricks custom element to render WooCommerce variation swatches on product queryloops (informational).
+ * Description: Adds a Bricks custom element to render WooCommerce variation swatches on product query loops (informational).
  * Version: 1.0.0
+ * Author: MixBus Marketing
+ * Author URI: https://mixbusmarketing.com
  * Text Domain: mbm-bricks-variation-swatches
  */
 

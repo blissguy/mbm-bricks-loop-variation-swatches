@@ -161,7 +161,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 	public $css_selector = '.mbm-variation-swatches';
 
 	public function get_label() {
-		return esc_html__( 'Variation Swatches (Card)', 'mbm-bricks-variation-swatches' );
+		return esc_html__( 'Loop Variation Swatches', 'mbm-bricks-variation-swatches' );
 	}
 
 	public function set_control_groups() {

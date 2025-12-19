@@ -17,9 +17,9 @@ This plugin provides an elegant way to display product variation attributes (lik
 
 ## Requirements
 
-- WordPress 5.8+
-- Bricks Builder 1.5+
-- WooCommerce 5.0+
+- WordPress 6.0+
+- Bricks Builder 2.1+
+- WooCommerce 10.4+
 
 ## Installation
 
@@ -40,5 +40,5 @@ GPL v2 or later
 
 ## Author
 
-Emmanuel Kuebu - [Bliss Web Concept](https://blisswebconcept.com)
+[MixBus Marketing](https://mixbusmarketing.com)
 
