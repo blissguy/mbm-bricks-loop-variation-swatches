@@ -33,13 +33,6 @@ This plugin provides an elegant way to display product variation attributes (lik
 2. Select which attributes to display
 3. Configure styling options as needed
 
-## Attribute Term Meta Keys
-
-For color and image swatches to work, you need to set the following term meta on your attribute terms:
-
-- `bricks_swatch_color_value` - Hex color value (e.g., `#ff0000`)
-- `bricks_swatch_image_value` - Attachment ID for the swatch image
-- `bricks_swatch_use_variation_image` - Set to `1` to use the variation's featured image as the swatch
 
 ## License
 
