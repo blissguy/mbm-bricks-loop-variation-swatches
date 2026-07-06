@@ -83,6 +83,20 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 					'type'    => 'checkbox',
 					'default' => true,
 				],
+				'label_singular'   => [
+					'label'       => esc_html__( 'Label: one value', 'mbm-bricks-loop-variation-swatches' ),
+					'type'        => 'text',
+					'placeholder' => esc_html__( 'e.g. Color', 'mbm-bricks-loop-variation-swatches' ),
+					'description' => esc_html__( 'Used when the product has exactly one option for this attribute. Defaults to the WooCommerce attribute label.', 'mbm-bricks-loop-variation-swatches' ),
+					'required'    => [ 'show_label', '=', true ],
+				],
+				'label_plural'     => [
+					'label'       => esc_html__( 'Label: multiple values', 'mbm-bricks-loop-variation-swatches' ),
+					'type'        => 'text',
+					'placeholder' => esc_html__( 'e.g. Colors', 'mbm-bricks-loop-variation-swatches' ),
+					'description' => esc_html__( 'Used when the product has more than one option for this attribute. Defaults to the singular label with an added "s".', 'mbm-bricks-loop-variation-swatches' ),
+					'required'    => [ 'show_label', '=', true ],
+				],
 				'limit'            => [
 					'label'       => esc_html__( 'Max values (0 = all)', 'mbm-bricks-loop-variation-swatches' ),
 					'type'        => 'number',
@@ -144,6 +158,20 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 			],
 		];
 
+		$this->controls['groupAlignItems'] = [
+			'tab'   => 'style',
+			'group' => 'swatchLayout',
+			'label' => esc_html__( 'Label alignment', 'mbm-bricks-loop-variation-swatches' ),
+			'type'  => 'align-items',
+			'description' => esc_html__( 'Aligns the attribute label against the swatch list (only visible when "Attribute label position" is set to row).', 'mbm-bricks-loop-variation-swatches' ),
+			'css'   => [
+				[
+					'property' => 'align-items',
+					'selector' => '.mbm-variation-swatches__group',
+				],
+			],
+		];
+
 		$this->controls['swatchesDirection'] = [
 			'tab'   => 'style',
 			'group' => 'swatchLayout',
@@ -192,7 +220,8 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 		$this->controls['swatchesAlignItems'] = [
 			'tab'   => 'style',
 			'group' => 'swatchLayout',
-			'label' => esc_html__( 'Swatch list align', 'mbm-bricks-loop-variation-swatches' ),
+			'label' => esc_html__( 'Swatch alignment', 'mbm-bricks-loop-variation-swatches' ),
+			'description' => esc_html__( 'Aligns swatches against each other within the list (only visible when swatches differ in height).', 'mbm-bricks-loop-variation-swatches' ),
 			'type'  => 'align-items',
 			'css'   => [
 				[
@@ -501,7 +530,11 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 
 			$group = MBM_BVS_Swatch_Data::resolve_group( $product, $available[ $key ]['raw_key'], $shown );
 
+			$singular = ! empty( $row['label_singular'] ) ? $row['label_singular'] : $group['label'];
+			$plural   = ! empty( $row['label_plural'] ) ? $row['label_plural'] : MBM_BVS_Swatch_Data::pluralize( $singular );
+
 			$group['key']        = $key;
+			$group['label']      = ( $total === 1 ) ? $singular : $plural;
 			$group['show_label'] = ! empty( $row['show_label'] );
 			$group['more']       = ( $limit > 0 && $total > $limit ) ? ( $total - $limit ) : 0;
 

@@ -32,6 +32,29 @@ final class MBM_BVS_Swatch_Data {
 	private static $variation_image_maps = [];
 
 	/**
+	 * Naive English pluralization for attribute group labels ("Color" -> "Colors").
+	 * Covers the common cases (attribute names are short, plain nouns); irregular
+	 * results can be corrected with the per-attribute label override controls.
+	 */
+	public static function pluralize( $word ) {
+		$word = trim( (string) $word );
+
+		if ( $word === '' ) {
+			return $word;
+		}
+
+		if ( preg_match( '/[^aeiou]y$/i', $word ) ) {
+			return substr( $word, 0, -1 ) . 'ies';
+		}
+
+		if ( preg_match( '/(s|x|z|ch|sh)$/i', $word ) ) {
+			return $word . 'es';
+		}
+
+		return $word . 's';
+	}
+
+	/**
 	 * Swatches are driven by the same Bricks setting that powers the native
 	 * add-to-cart swatches, so both stay in sync site-wide.
 	 */

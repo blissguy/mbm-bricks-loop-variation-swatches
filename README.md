@@ -4,7 +4,7 @@
 **Tags:** woocommerce, bricks, variation swatches, product loop, shop
 **Requires at least:** 6.0
 **Tested up to:** 6.9
-**Stable tag:** 2.0.0
+**Stable tag:** 2.1.0
 **Requires PHP:** 7.4
 **Requires Plugins:** woocommerce
 **License:** GPLv2 or later
@@ -24,6 +24,7 @@ This plugin adds a **Loop Variation Swatches** element to the Bricks builder. Dr
 - Falls back to your product variation photos when an option has no image of its own.
 - Cap how many swatches show per card and display a "+3" style counter for the rest.
 - Hide an attribute on cards unless the product actually offers a choice.
+- Attribute labels automatically switch between singular and plural ("Color" vs "Colors") based on how many options the product has — with optional text overrides per attribute if you want different wording.
 - Style everything visually in the builder: sizes, spacing, borders, labels, and more.
 - Works outside query loops too: place it on a single product template (or any page where a product is the current post) and it shows that product's options.
 
@@ -57,6 +58,10 @@ The element follows the same rules as Bricks' own product-page swatches:
 - **Image** options use the term's image, then the matching product variation photo (when that fallback is enabled on the attribute), then the attribute's fallback image.
 - Options appear in the same order as on your product pages.
 - Attributes without a swatch type — including custom per-product attributes — display as text labels.
+
+## Attribute label wording
+
+Each attribute row has a "Label: one value" and "Label: multiple values" field. Leave both blank and the element uses the WooCommerce attribute label for the singular form ("Color") and adds an "s" for the plural ("Colors"). If the automatic plural reads wrong for a given attribute, or you'd rather use different wording entirely, fill in either field to override it.
 
 ---
 
