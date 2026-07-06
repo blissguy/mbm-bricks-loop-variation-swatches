@@ -4,7 +4,7 @@ Tags: woocommerce, bricks, variation swatches, product loop, shop
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.1.1
+Stable tag: 2.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -39,6 +39,9 @@ This plugin adds a "Loop Variation Swatches" element to the Bricks builder. Drop
 4. In the element settings, choose which attributes to display.
 
 == Changelog ==
+
+= 2.1.2 =
+* Fixed: the "Min values to show" setting could hide an attribute entirely in the Bricks builder, leaving nothing to select or style. It now only affects the frontend — the attribute always stays visible while editing.
 
 = 2.1.1 =
 * Removed the manual translation loading call — WordPress has auto-loaded plugin translations since version 4.6, so this is no longer needed.
