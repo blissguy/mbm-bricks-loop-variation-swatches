@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Bricks Query Loop Variation Swatches
  * Description: Show your product color, size, and image options as swatches on product cards built with Bricks query loops.
- * Version: 2.1.0
+ * Version: 2.1.1
  * Author: Mixbus Marketing
  * Author URI: https://mixbusmarketing.com/
  * Text Domain: mbm-bricks-loop-variation-swatches
@@ -17,19 +17,13 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'MBM_BVS_VERSION', '2.1.0' );
+define( 'MBM_BVS_VERSION', '2.1.1' );
 define( 'MBM_BVS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'MBM_BVS_URL', plugin_dir_url( __FILE__ ) );
 
 add_action( 'plugins_loaded', 'mbm_bvs_bootstrap' );
 
 function mbm_bvs_bootstrap() {
-	load_plugin_textdomain(
-		'mbm-bricks-loop-variation-swatches',
-		false,
-		dirname( plugin_basename( __FILE__ ) ) . '/languages'
-	);
-
 	add_filter( 'bricks/builder/i18n', 'mbm_bvs_add_builder_i18n' );
 	add_action( 'init', 'mbm_bvs_register_bricks_elements', 11 );
 }

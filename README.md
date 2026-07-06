@@ -3,8 +3,8 @@
 **Contributors:** mixbusmarketing
 **Tags:** woocommerce, bricks, variation swatches, product loop, shop
 **Requires at least:** 6.0
-**Tested up to:** 6.9
-**Stable tag:** 2.1.0
+**Tested up to:** 7.0
+**Stable tag:** 2.1.1
 **Requires PHP:** 7.4
 **Requires Plugins:** woocommerce
 **License:** GPLv2 or later

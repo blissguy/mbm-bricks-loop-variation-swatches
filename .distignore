@@ -2,7 +2,6 @@
 .github
 .gitignore
 .distignore
-.cursor
 .DS_Store
 .idea
 .vscode
