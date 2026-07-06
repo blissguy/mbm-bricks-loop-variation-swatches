@@ -1,6 +1,6 @@
 {
   "name": "mbm-bricks-loop-variation-swatches",
-  "version": "2.0.0",
+  "version": "2.1.1",
   "private": true,
   "description": "Show WooCommerce variation swatches on product cards built with Bricks query loops.",
   "license": "GPL-2.0-or-later"

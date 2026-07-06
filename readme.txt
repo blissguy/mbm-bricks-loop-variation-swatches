@@ -2,9 +2,9 @@
 Contributors: mixbusmarketing
 Tags: woocommerce, bricks, variation swatches, product loop, shop
 Requires at least: 6.0
-Tested up to: 6.9
+Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.0.0
+Stable tag: 2.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,7 @@ This plugin adds a "Loop Variation Swatches" element to the Bricks builder. Drop
 * Falls back to your product variation photos when an option has no image of its own.
 * Cap how many swatches show per card and display a "+3" style counter for the rest.
 * Hide an attribute on cards unless the product actually offers a choice.
+* Attribute labels automatically switch between singular and plural ("Color" vs "Colors") based on how many options the product has — with optional text overrides per attribute if you want different wording.
 * Style everything visually in the builder: sizes, spacing, borders, labels, and more.
 * Works outside query loops too: place it on a single product template (or any page where a product is the current post) and it shows that product's options.
 
@@ -38,6 +39,14 @@ This plugin adds a "Loop Variation Swatches" element to the Bricks builder. Drop
 4. In the element settings, choose which attributes to display.
 
 == Changelog ==
+
+= 2.1.1 =
+* Removed the manual translation loading call — WordPress has auto-loaded plugin translations since version 4.6, so this is no longer needed.
+* Confirmed compatibility with the latest WordPress version.
+
+= 2.1.0 =
+* Added a "Label alignment" style control so the attribute label can be vertically aligned against the swatch list when the label sits beside it.
+* Attribute group labels now switch between singular and plural automatically ("Color" when a product has one option, "Colors" when it has several), with optional per-attribute text overrides.
 
 = 2.0.0 =
 * Complete rebuild on Bricks' own variation swatches system: the swatch type you pick per attribute (color, label, or image) now decides how every option is displayed.
