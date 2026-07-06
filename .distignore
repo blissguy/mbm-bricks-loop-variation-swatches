@@ -1,0 +1,16 @@
+.git
+.github
+.gitignore
+.distignore
+.cursor
+.DS_Store
+.idea
+.vscode
+build
+node_modules
+vendor/bin
+*.zip
+*.log
+npm-debug.log
+yarn-error.log
+README.md
