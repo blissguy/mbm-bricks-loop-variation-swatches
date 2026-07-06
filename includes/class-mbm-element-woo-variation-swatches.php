@@ -108,7 +108,7 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 					'type'        => 'number',
 					'min'         => 0,
 					'placeholder' => '0',
-					'description' => esc_html__( 'Only show this attribute when the product offers more than this many options (0 = always show)', 'mbm-bricks-loop-variation-swatches' ),
+					'description' => esc_html__( 'Only show this attribute on the frontend when the product offers more than this many options (0 = always show). Always visible in the builder so you can still style it.', 'mbm-bricks-loop-variation-swatches' ),
 				],
 			],
 		];
@@ -521,7 +521,13 @@ class MBM_Element_Woo_Variation_Swatches extends \Bricks\Element {
 			$total      = count( $values );
 			$min_values = isset( $row['min_values'] ) ? (int) $row['min_values'] : 0;
 
-			if ( $min_values > 0 && $total <= $min_values ) {
+			/*
+			 * "Min values to show" is a frontend display rule, not a data
+			 * constraint -- skip it in the builder so the row stays visible
+			 * and editable even when the preview product doesn't clear the
+			 * threshold.
+			 */
+			if ( $this->is_frontend && $min_values > 0 && $total <= $min_values ) {
 				continue;
 			}
 
